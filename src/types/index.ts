@@ -1,40 +1,57 @@
 export interface ESP32Device {
-    id: string;
-    name: string;
-    rssi: number;
-    serialNumber?: string;
-  }
-  
-  export interface WiFiNetwork {
-    ssid: string;
-    signalStrength: number;
-    isSecured: boolean;
-  }
-  
-  export interface BLECharacteristic {
-    uuid: string;
-    canRead: boolean;
-    canWrite: boolean;
-    canNotify: boolean;
-  }
-  
-  export interface BLEService {
-    uuid: string;
-    characteristics: BLECharacteristic[];
-  }
-  
-  export type ConnectionStatus = 
-    | 'disconnected'
-    | 'connecting'
-    | 'connected'
-    | 'configuring'
-    | 'completed'
-    | 'failed';
-  
-  export interface DeviceSetupStep {
-    id: string;
-    title: string;
-    description: string;
-    isCompleted: boolean;
-    isActive: boolean;
-  }
+  id: string;
+  name: string;
+  rssi: number;
+  serialNumber?: string;
+}
+
+export interface WiFiNetwork {
+  ssid: string;
+  signalStrength?: number;
+  isSecured?: boolean;
+}
+
+export interface BLECharacteristic {
+  uuid: string;
+  canRead: boolean;
+  canWrite: boolean;
+  canNotify: boolean;
+}
+
+export interface BLEService {
+  uuid: string;
+  characteristics: BLECharacteristic[];
+}
+
+export type ConnectionStatus = 
+  | 'disconnected'
+  | 'connecting'
+  | 'connected'
+  | 'checking_registration'
+  | 'loading_wifi'
+  | 'ready'
+  | 'configuring_wifi'
+  | 'waiting_wifi_connection'
+  | 'finalizing'
+  | 'completed'
+  | 'failed'
+  | 'timeout';
+
+export interface DeviceSetupStep {
+  id: string;
+  title: string;
+  description: string;
+  isCompleted: boolean;
+  isActive: boolean;
+}
+
+export interface WiFiSetupData {
+  ssid: string;
+  password: string;
+}
+
+export interface BLENotificationMessage {
+  type: 'wifi_ok' | 'wifi_failed' | 'unknown';
+  message: string;
+  timestamp: number;
+}

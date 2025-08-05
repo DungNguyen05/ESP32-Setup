@@ -23,29 +23,51 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<string>('Connected');
   const [wifiList, setWifiList] = useState<string[]>([]);
+  const [isWaitingForWifiOK, setIsWaitingForWifiOK] = useState(false);
 
   useEffect(() => {
     loadDeviceInfo();
+    
+    // Cleanup khi component unmount
+    return () => {
+      if (isWaitingForWifiOK) {
+        setIsWaitingForWifiOK(false);
+      }
+    };
   }, []);
 
   const loadDeviceInfo = async () => {
     try {
       setIsLoading(true);
+      setConnectionStatus('Loading device info...');
       
-      // Kiểm tra Serial Number với backend (mock)
+      // Bước 1: Kiểm tra Serial Number với backend
       if (device.serialNumber) {
+        setConnectionStatus('Checking device registration...');
         console.log('Checking SN with backend:', device.serialNumber);
-        // TODO: Implement backend check
-        // const isRegistered = await checkSerialNumberWithBackend(device.serialNumber);
+        
+        const isRegistered = await BLEManager.checkSerialNumberWithBackend(device.serialNumber);
+        if (!isRegistered) {
+          Alert.alert(
+            'Device Not Registered', 
+            'This device is not registered or belongs to another user.',
+            [{ text: 'OK', onPress: onBack }]
+          );
+          return;
+        }
       }
 
-      // Đọc danh sách WiFi
+      // Bước 2: Đọc danh sách WiFi từ characteristic CE01
+      setConnectionStatus('Loading WiFi networks...');
       const wifiNetworks = await BLEManager.readWiFiList();
       setWifiList(wifiNetworks);
+      
+      setConnectionStatus('Ready for WiFi configuration');
 
     } catch (error) {
       console.error('Load device info failed:', error);
       Alert.alert('Error', 'Failed to load device information');
+      setConnectionStatus('Error loading device info');
     } finally {
       setIsLoading(false);
     }
@@ -75,21 +97,54 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({
       setIsLoading(true);
       setConnectionStatus('Configuring WiFi...');
 
-      // Gửi cấu hình WiFi
+      // Bước 1: Setup notification listener để nhận "Wifi_OK"
+      await BLEManager.setupWiFiNotification((message: string) => {
+        console.log('Received BLE notification:', message);
+        
+        if (message.includes('Wifi_OK')) {
+          console.log('WiFi connection successful!');
+          setIsWaitingForWifiOK(false);
+          handleWiFiSuccess();
+        }
+      });
+
+      // Bước 2: Gửi cấu hình WiFi vào characteristic CE02
       const configSuccess = await BLEManager.configureWiFi(ssid, password);
       if (!configSuccess) {
         throw new Error('Failed to send WiFi configuration');
       }
 
+      // Bước 3: Chờ thiết bị kết nối WiFi và gửi "Wifi_OK"
       setConnectionStatus('Waiting for WiFi connection...');
+      setIsWaitingForWifiOK(true);
       
-      // Mock: Chờ thiết bị kết nối WiFi và gửi "Wifi_OK"
-      // TODO: Implement BLE notification subscription để nhận "Wifi_OK"
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Timeout sau 40 giây nếu không nhận được Wifi_OK
+      setTimeout(() => {
+        if (isWaitingForWifiOK) {
+          setIsWaitingForWifiOK(false);
+          setIsLoading(false);
+          setConnectionStatus('WiFi connection timeout');
+          Alert.alert(
+            'Connection Timeout', 
+            'Device could not connect to WiFi within 40 seconds. Please check your WiFi credentials and try again.'
+          );
+        }
+      }, 40000);
 
+    } catch (error) {
+      console.error('WiFi setup failed:', error);
+      Alert.alert('Setup Failed', 'Failed to configure WiFi. Please try again.');
+      setConnectionStatus('Setup failed');
+      setIsLoading(false);
+      setIsWaitingForWifiOK(false);
+    }
+  };
+
+  const handleWiFiSuccess = async () => {
+    try {
       setConnectionStatus('Finalizing setup...');
 
-      // Gửi lệnh END
+      // Bước 4: Gửi lệnh END sau khi nhận được Wifi_OK
       const endSuccess = await BLEManager.sendEndCommand();
       if (!endSuccess) {
         throw new Error('Failed to send END command');
@@ -97,25 +152,35 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({
 
       setConnectionStatus('Setup completed!');
 
-      // Hiển thị thông báo thành công
+      // Bước 5: Hiển thị thông báo thành công và yêu cầu xác nhận
       Alert.alert(
-        'Success',
-        'Device has been configured successfully!',
+        'WiFi Configuration Successful',
+        'Your device has been configured successfully and is now connected to WiFi. Please confirm to complete the setup.',
         [
           {
             text: 'Finish',
             onPress: () => {
+              // Bước 6: Disconnect và báo hoàn thành
               BLEManager.disconnectDevice();
-              onDeviceAdded();
+              Alert.alert(
+                'Device Added Successfully',
+                'Your device has been added to your account and is ready to use.',
+                [
+                  {
+                    text: 'OK',
+                    onPress: onDeviceAdded,
+                  },
+                ]
+              );
             },
           },
         ]
       );
 
     } catch (error) {
-      console.error('WiFi setup failed:', error);
-      Alert.alert('Setup Failed', 'Failed to configure WiFi. Please try again.');
-      setConnectionStatus('Setup failed');
+      console.error('Finalize setup failed:', error);
+      Alert.alert('Setup Error', 'Failed to finalize setup. Please try again.');
+      setConnectionStatus('Finalization failed');
     } finally {
       setIsLoading(false);
     }
@@ -147,7 +212,12 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.loadingText}>Setting up device...</Text>
+            <Text style={styles.loadingText}>
+              {isWaitingForWifiOK 
+                ? 'Connecting to WiFi... (up to 40 seconds)' 
+                : 'Setting up device...'
+              }
+            </Text>
           </View>
         ) : (
           <View style={styles.wifiSection}>
@@ -164,7 +234,15 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({
                 </TouchableOpacity>
               ))
             ) : (
-              <Text style={styles.noWifiText}>No WiFi networks found</Text>
+              <View style={styles.emptyWifiContainer}>
+                <Text style={styles.noWifiText}>No WiFi networks found</Text>
+                <TouchableOpacity 
+                  style={styles.refreshButton}
+                  onPress={loadDeviceInfo}
+                >
+                  <Text style={styles.refreshButtonText}>Refresh</Text>
+                </TouchableOpacity>
+              </View>
             )}
           </View>
         )}
@@ -242,6 +320,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: '#666',
+    textAlign: 'center',
   },
   wifiSection: {
     flex: 1,
@@ -279,11 +358,26 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: 'bold',
   },
+  emptyWifiContainer: {
+    alignItems: 'center',
+    marginTop: 40,
+  },
   noWifiText: {
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
-    marginTop: 40,
+    marginBottom: 16,
+  },
+  refreshButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  refreshButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
