@@ -23,19 +23,13 @@ export interface BLEService {
   characteristics: BLECharacteristic[];
 }
 
-export type ConnectionStatus = 
-  | 'disconnected'
+export type SetupState = 
   | 'connecting'
-  | 'connected'
-  | 'checking_registration'
-  | 'loading_wifi'
-  | 'ready'
-  | 'configuring_wifi'
-  | 'waiting_wifi_connection'
-  | 'finalizing'
-  | 'completed'
-  | 'failed'
-  | 'timeout';
+  | 'readingWiFiList'
+  | 'configuringWiFi'
+  | 'waitingForConnection'
+  | 'success'
+  | 'error';
 
 export interface DeviceSetupStep {
   id: string;
@@ -54,4 +48,17 @@ export interface BLENotificationMessage {
   type: 'wifi_ok' | 'wifi_failed' | 'unknown';
   message: string;
   timestamp: number;
+}
+
+// Mock API response types (giống Flutter)
+export interface DeviceRegistrationResponse {
+  isValid: boolean;
+  serialNumber: string;
+  message?: string;
+}
+
+export interface AddDeviceResponse {
+  success: boolean;
+  deviceId: string;
+  message?: string;
 }
