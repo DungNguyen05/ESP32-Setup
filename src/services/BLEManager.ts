@@ -269,12 +269,13 @@ class BLEService {
         const serviceUuid = service.uuid.toUpperCase();
         
         if (this.TARGET_SERVICE_UUIDS.some(uuid => serviceUuid.includes(uuid))) {
+          const fullCharUuid = `0000${this.CHAR_WIFI_CONFIG}-0000-1000-8000-00805F9B34FB`;
+          
           try {
-            const fullCharUuid = `0000${this.CHAR_WIFI_CONFIG}-0000-1000-8000-00805F9B34FB`;
-            
             console.log(`Enabling notifications on ${this.CHAR_WIFI_CONFIG}...`);
             
-            await this.connectedDevice.monitorCharacteristicForService(
+            // QUAN TRỌNG: Subscribe vào notification TRƯỚC khi gửi credentials
+            this.connectedDevice.monitorCharacteristicForService(
               service.uuid,
               fullCharUuid,
               (error, characteristic) => {
@@ -294,17 +295,18 @@ class BLEService {
                   const trimmedMessage = message.trim();
                   
                   const isWifiOk = lowerMessage.includes('wifi_ok') || 
-                                 lowerMessage.includes('wifi ok') ||
-                                 lowerMessage.includes('wifiok') ||
-                                 lowerMessage === 'wifi_ok' ||
-                                 lowerMessage === 'ok' ||
-                                 trimmedMessage === 'Wifi_OK' ||
-                                 trimmedMessage === 'wifi_ok' ||
-                                 trimmedMessage === 'OK';
+                                lowerMessage.includes('wifi ok') ||
+                                lowerMessage.includes('wifiok') ||
+                                lowerMessage === 'wifi_ok' ||
+                                lowerMessage === 'ok' ||
+                                trimmedMessage === 'Wifi_OK' ||
+                                trimmedMessage === 'wifi_ok' ||
+                                trimmedMessage === 'OK';
                   
                   if (isWifiOk) {
                     console.log('✅ WiFi connection successful! Pattern matched:', `"${message}"`);
-                    this.notificationCallback?.('Wifi_OK');
+                    // QUAN TRỌNG: Gọi callback với message đặc biệt
+                    this.notificationCallback?.('WIFI_SUCCESS');
                   } else {
                     console.log('ℹ  Other notification (not WiFi_OK):', `"${message}"`);
                     this.notificationCallback?.(message);
@@ -324,7 +326,7 @@ class BLEService {
       }
       
       if (!notificationEnabled) {
-        console.log('⚠ No notifications enabled - may not receive WiFi_OK');
+        throw new Error('Could not enable notifications');
       } else {
         console.log('✓ Ready to receive "Wifi_OK" notifications!');
       }

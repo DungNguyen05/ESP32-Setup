@@ -51,42 +51,54 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({
     };
   }, []);
 
-  const connectToDevice = async () => {
-    try {
-      setCurrentState(SetupState.connecting);
-      setStatusMessage(`Đang kết nối với ${device.name}...`);
-
-      console.log('✓ Connected to device, setting up notifications...');
-      
-      // Step 1: Setup notification listener
-      setStatusMessage('Đang thiết lập notifications...');
-      
-      await BLEManager.setupWiFiNotification((message: string) => {
-        console.log('🔔 Received notification:', message);
+    const connectToDevice = async () => {
+      try {
+        setCurrentState(SetupState.connecting);
+        setStatusMessage(`Đang kết nối với ${device.name}...`);
+    
+        console.log('✓ Connected to device, setting up notifications...');
         
-        if (message.includes('Wifi_OK') || message.includes('wifi_ok') || message.includes('OK')) {
-          console.log('✅ WiFi connection successful!');
-          if (timeoutTimer) {
-            clearTimeout(timeoutTimer);
-            setTimeoutTimer(null);
+        // Step 1: Setup notification listener NGAY LẬP TỨC
+        setStatusMessage('Đang thiết lập notifications...');
+        
+        await BLEManager.setupWiFiNotification((message: string) => {
+          console.log('🔔 Received notification:', message);
+          
+          // QUAN TRỌNG: Check cho message đặc biệt
+          if (message === 'WIFI_SUCCESS') {
+            console.log('✅ WiFi connection successful notification received!');
+            
+            // Hiển thị thông báo cho user
+            Alert.alert(
+              'Thành công! 🎉',
+              'Đã nhận được thông báo "Wifi_OK" từ thiết bị!\n\nThiết bị đã kết nối WiFi thành công.',
+              [{ text: 'OK' }]
+            );
+            
+            if (timeoutTimer) {
+              clearTimeout(timeoutTimer);
+              setTimeoutTimer(null);
+            }
+            onWiFiConnected();
+          } else {
+            console.log('ℹ  Other notification:', message);
+            // Có thể hiển thị notification khác nếu cần
           }
-          onWiFiConnected();
-        }
-      });
-
-      // Step 2: Small delay to ensure notifications are ready
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Step 3: Read WiFi list
-      setStatusMessage('Notifications đã sẵn sàng, đang đọc WiFi list...');
-      readWiFiList();
-
-    } catch (error) {
-      console.error('Connection setup failed:', error);
-      setCurrentState(SetupState.error);
-      setStatusMessage('Không thể kết nối với thiết bị. Vui lòng thử lại.');
-    }
-  };
+        });
+    
+        // Step 2: Small delay to ensure notifications are ready
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    
+        // Step 3: Read WiFi list
+        setStatusMessage('Notifications đã sẵn sàng, đang đọc WiFi list...');
+        readWiFiList();
+    
+      } catch (error) {
+        console.error('Connection setup failed:', error);
+        setCurrentState(SetupState.error);
+        setStatusMessage('Không thể kết nối với thiết bị. Vui lòng thử lại.');
+      }
+    };
 
   const readWiFiList = async () => {
     try {
