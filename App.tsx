@@ -1,27 +1,69 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useState } from 'react';
+import {
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  Alert,
+} from 'react-native';
+import DeviceScanner from './src/components/DeviceScanner';
+import DeviceDetails from './src/components/DeviceDetails';
+import { ESP32Device } from './src/services/BLEManager';
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
+type Screen = 'scanner' | 'details';
 
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+const App: React.FC = () => {
+  const [currentScreen, setCurrentScreen] = useState<Screen>('scanner');
+  const [selectedDevice, setSelectedDevice] = useState<ESP32Device | null>(null);
+
+  const handleDeviceSelected = (device: ESP32Device) => {
+    setSelectedDevice(device);
+    setCurrentScreen('details');
+  };
+
+  const handleBack = () => {
+    setSelectedDevice(null);
+    setCurrentScreen('scanner');
+  };
+
+  const handleDeviceAdded = () => {
+    Alert.alert(
+      'Success',
+      'Device has been added successfully!',
+      [
+        {
+          text: 'OK',
+          onPress: () => {
+            setSelectedDevice(null);
+            setCurrentScreen('scanner');
+          },
+        },
+      ]
+    );
+  };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <NewAppScreen templateFileName="App.tsx" />
-    </View>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
+      
+      {currentScreen === 'scanner' && (
+        <DeviceScanner onDeviceSelected={handleDeviceSelected} />
+      )}
+      
+      {currentScreen === 'details' && selectedDevice && (
+        <DeviceDetails
+          device={selectedDevice}
+          onBack={handleBack}
+          onDeviceAdded={handleDeviceAdded}
+        />
+      )}
+    </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f8f9fa',
   },
 });
 
