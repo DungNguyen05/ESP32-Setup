@@ -168,7 +168,7 @@ Lưu ý quan trọng:
       disabled={isConnecting}
     >
       <View style={styles.deviceIcon}>
-        <Text style={styles.deviceIconText}>📡</Text>
+        <Text style={styles.deviceIconText}>●</Text>
       </View>
       
       <View style={styles.deviceInfo}>
@@ -180,7 +180,7 @@ Lưu ý quan trọng:
           Device ID: {item.id.substring(0, 8)}...
         </Text>
         <View style={styles.signalContainer}>
-          <Text style={styles.signalText}>📶 {item.rssi} dBm</Text>
+          <Text style={styles.signalText}>▲ {item.rssi} dBm</Text>
         </View>
       </View>
       
@@ -191,7 +191,7 @@ Lưu ý quan trọng:
         {isConnecting ? (
           <ActivityIndicator size="small" color="#007AFF" />
         ) : (
-          <Text style={styles.arrowText}>→</Text>
+          <Text style={styles.arrowText}>›</Text>
         )}
       </View>
     </TouchableOpacity>
@@ -200,7 +200,7 @@ Lưu ý quan trọng:
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyIcon}>
-        {isScanning ? '🔍' : '📱'}
+        {isScanning ? '○' : '□'}
       </Text>
       <Text style={styles.emptyText}>
         {isScanning
@@ -229,11 +229,11 @@ Lưu ý quan trọng:
         <Text style={styles.title}>ESP32 WiFi Setup</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity onPress={showInstructions} style={styles.helpButton}>
-            <Text style={styles.helpButtonText}>❓</Text>
+            <Text style={styles.helpButtonText}>?</Text>
           </TouchableOpacity>
           <View style={styles.serverStatus}>
             <Text style={styles.serverStatusText}>
-              {serverConnected ? '☁️' : '❌'}
+              {serverConnected ? '●' : '✕'}
             </Text>
           </View>
         </View>
@@ -246,12 +246,12 @@ Lưu ý quan trọng:
             <ActivityIndicator size="small" color="#007AFF" style={styles.statusIcon} />
           ) : (
             <Text style={styles.statusIcon}>
-              {devices.length === 0 ? 'ℹ️' : '✅'}
+              {devices.length === 0 ? 'i' : '✓'}
             </Text>
           )}
           <Text style={styles.statusText}>{statusMessage}</Text>
           {!serverConnected && (
-            <Text style={styles.warningIcon}>⚠️</Text>
+            <Text style={styles.warningIcon}>!</Text>
           )}
         </View>
       </View>
@@ -275,12 +275,12 @@ Lưu ý quan trọng:
       <View style={styles.fabContainer}>
         {isScanning ? (
           <TouchableOpacity style={[styles.fab, styles.fabStop]} onPress={stopScan}>
-            <Text style={styles.fabText}>⏹️</Text>
+            <Text style={styles.fabText}>■</Text>
             <Text style={styles.fabLabel}>Dừng quét</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity style={styles.fab} onPress={startScan}>
-            <Text style={styles.fabText}>🔍</Text>
+            <Text style={styles.fabText}>○</Text>
             <Text style={styles.fabLabel}>Quét thiết bị</Text>
           </TouchableOpacity>
         )}
@@ -321,7 +321,9 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   helpButtonText: {
-    fontSize: 14,
+    fontSize: 16,
+    color: 'white',
+    fontWeight: 'bold',
   },
   serverStatus: {
     width: 20,
@@ -330,7 +332,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   serverStatusText: {
-    fontSize: 16,
+    fontSize: 12,
+    color: 'white',
+    fontWeight: 'bold',
   },
   statusBar: {
     backgroundColor: '#e8f4f8',
@@ -345,6 +349,16 @@ const styles = StyleSheet.create({
   },
   statusIcon: {
     marginRight: 12,
+    fontSize: 14,
+    color: '#17a2b8',
+    fontWeight: 'bold',
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#17a2b8',
+    textAlign: 'center',
+    lineHeight: 14,
   },
   statusText: {
     flex: 1,
@@ -353,7 +367,16 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   warningIcon: {
-    fontSize: 16,
+    fontSize: 14,
+    color: '#dc3545',
+    fontWeight: 'bold',
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#dc3545',
+    textAlign: 'center',
+    lineHeight: 14,
   },
   content: {
     flex: 1,
@@ -388,7 +411,9 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   deviceIconText: {
-    fontSize: 24,
+    fontSize: 20,
+    color: '#17a2b8',
+    fontWeight: 'bold',
   },
   deviceInfo: {
     flex: 1,
@@ -416,6 +441,7 @@ const styles = StyleSheet.create({
   signalText: {
     fontSize: 12,
     color: '#666',
+    fontWeight: 'bold',
   },
   deviceActions: {
     alignItems: 'center',
@@ -433,8 +459,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   arrowText: {
-    fontSize: 16,
+    fontSize: 20,
     color: '#007AFF',
+    fontWeight: 'bold',
   },
   emptyContainer: {
     flex: 1,
@@ -445,6 +472,8 @@ const styles = StyleSheet.create({
   emptyIcon: {
     fontSize: 80,
     marginBottom: 24,
+    color: '#ccc',
+    fontWeight: 'bold',
   },
   emptyText: {
     fontSize: 18,
@@ -496,8 +525,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#dc3545',
   },
   fabText: {
-    fontSize: 24,
+    fontSize: 20,
     marginBottom: 4,
+    color: 'white',
+    fontWeight: 'bold',
   },
   fabLabel: {
     fontSize: 10,

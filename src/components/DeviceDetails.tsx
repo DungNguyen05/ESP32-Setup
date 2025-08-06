@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   TextInput,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { BLEManager, ESP32Device } from '../services/BLEManager';
 
@@ -70,7 +72,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({
             
             // Hiển thị thông báo cho user
             Alert.alert(
-              'Thành công! 🎉',
+              'Thành công!',
               'Đã nhận được thông báo "Wifi_OK" từ thiết bị!\n\nThiết bị đã kết nối WiFi thành công.',
               [{ text: 'OK' }]
             );
@@ -209,7 +211,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({
     }
 
     setCurrentState(SetupState.success);
-    setStatusMessage('Thiết bị đã kết nối WiFi thành công! 🎉\nVui lòng nhấn "Xác nhận hoàn thành" để thêm thiết bị vào hệ thống.');
+    setStatusMessage('Thiết bị đã kết nối WiFi thành công!\nVui lòng nhấn "Xác nhận hoàn thành" để thêm thiết bị vào hệ thống.');
 
     console.log('✓ Moved to success state, waiting for user confirmation...');
   };
@@ -263,7 +265,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({
     } catch (error) {
       console.error('✗ Error completing setup:', error);
       setIsCompletingSetup(false);
-      setStatusMessage('Thiết bị đã kết nối WiFi thành công! 🎉\nVui lòng nhấn "Xác nhận hoàn thành" để thêm thiết bị vào hệ thống.');
+      setStatusMessage('Thiết bị đã kết nối WiFi thành công!\nVui lòng nhấn "Xác nhận hoàn thành" để thêm thiết bị vào hệ thống.');
 
       Alert.alert(
         'Lỗi hoàn tất cấu hình',
@@ -323,95 +325,106 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({
   );
 
   const renderWiFiConfigForm = () => (
-    <ScrollView style={styles.formContainer} contentContainerStyle={styles.formContent}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Cấu hình WiFi</Text>
-        <Text style={styles.headerSubtitle}>Thiết bị: {device.name}</Text>
-      </View>
-
-      {/* Available networks */}
-      {availableNetworks.length > 0 && (
-        <View style={styles.networksSection}>
-          <Text style={styles.sectionTitle}>Mạng WiFi có sẵn:</Text>
-          <ScrollView style={styles.networksList} showsVerticalScrollIndicator={true}>
-            {availableNetworks.map((network, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.networkItem,
-                  selectedSSID === network && styles.networkItemSelected
-                ]}
-                onPress={() => selectNetworkFromList(network)}
-              >
-                <Text style={styles.networkIcon}>📶</Text>
-                <Text style={[
-                  styles.networkName,
-                  selectedSSID === network && styles.networkNameSelected
-                ]}>
-                  {network}
-                </Text>
-                {selectedSSID === network && (
-                  <Text style={styles.checkIcon}>✓</Text>
-                )}
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+    <KeyboardAvoidingView 
+      style={styles.keyboardAvoidingView}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+    >
+      <ScrollView 
+        style={styles.formContainer} 
+        contentContainerStyle={styles.formContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Cấu hình WiFi</Text>
+          <Text style={styles.headerSubtitle}>Thiết bị: {device.name}</Text>
         </View>
-      )}
 
-      {/* WiFi SSID input */}
-      <View style={styles.inputSection}>
-        <Text style={styles.inputLabel}>Tên WiFi (SSID)</Text>
-        <TextInput
-          style={styles.textInput}
-          value={selectedSSID}
-          onChangeText={setSelectedSSID}
-          placeholder="Nhập tên mạng WiFi"
-          placeholderTextColor="#999"
-        />
-      </View>
+        {/* Available networks */}
+        {availableNetworks.length > 0 && (
+          <View style={styles.networksSection}>
+            <Text style={styles.sectionTitle}>Mạng WiFi có sẵn:</Text>
+            <ScrollView style={styles.networksList} showsVerticalScrollIndicator={true}>
+              {availableNetworks.map((network, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.networkItem,
+                    selectedSSID === network && styles.networkItemSelected
+                  ]}
+                  onPress={() => selectNetworkFromList(network)}
+                >
+                  <Text style={styles.networkIcon}>▲</Text>
+                  <Text style={[
+                    styles.networkName,
+                    selectedSSID === network && styles.networkNameSelected
+                  ]}>
+                    {network}
+                  </Text>
+                  {selectedSSID === network && (
+                    <Text style={styles.checkIcon}>✓</Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
-      {/* WiFi Password input */}
-      <View style={styles.inputSection}>
-        <Text style={styles.inputLabel}>Mật khẩu WiFi</Text>
-        <View style={styles.passwordContainer}>
+        {/* WiFi SSID input */}
+        <View style={styles.inputSection}>
+          <Text style={styles.inputLabel}>Tên WiFi (SSID)</Text>
           <TextInput
-            style={styles.passwordInput}
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Nhập mật khẩu WiFi"
+            style={styles.textInput}
+            value={selectedSSID}
+            onChangeText={setSelectedSSID}
+            placeholder="Nhập tên mạng WiFi"
             placeholderTextColor="#999"
-            secureTextEntry={isObscured}
           />
-          <TouchableOpacity
-            style={styles.eyeButton}
-            onPress={() => setIsObscured(!isObscured)}
-          >
-            <Text style={styles.eyeIcon}>{isObscured ? '👁️' : '🙈'}</Text>
-          </TouchableOpacity>
         </View>
-      </View>
 
-      {/* Submit button */}
-      <TouchableOpacity style={styles.submitButton} onPress={sendWiFiCredentials}>
-        <Text style={styles.submitButtonIcon}>📡</Text>
-        <Text style={styles.submitButtonText}>Gửi thông tin WiFi</Text>
-      </TouchableOpacity>
+        {/* WiFi Password input */}
+        <View style={styles.inputSection}>
+          <Text style={styles.inputLabel}>Mật khẩu WiFi</Text>
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Nhập mật khẩu WiFi"
+              placeholderTextColor="#999"
+              secureTextEntry={isObscured}
+            />
+            <TouchableOpacity
+              style={styles.eyeButton}
+              onPress={() => setIsObscured(!isObscured)}
+            >
+              <Text style={styles.eyeIcon}>{isObscured ? '○' : '●'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
-      {/* Info card */}
-      <View style={styles.infoCard}>
-        <Text style={styles.infoIcon}>ℹ️</Text>
-        <Text style={styles.infoText}>
-          Thiết bị sẽ thử kết nối WiFi trong 40 giây. Bạn sẽ nhận được thông báo "Wifi_OK" khi hoàn tất.
-        </Text>
-      </View>
-    </ScrollView>
+        {/* Submit button */}
+        <TouchableOpacity style={styles.submitButton} onPress={sendWiFiCredentials}>
+          <Text style={styles.submitButtonIcon}>▶</Text>
+          <Text style={styles.submitButtonText}>Gửi thông tin WiFi</Text>
+        </TouchableOpacity>
+
+        {/* Info card */}
+        <View style={styles.infoCard}>
+          <Text style={styles.infoIcon}>i</Text>
+          <Text style={styles.infoText}>
+            Thiết bị sẽ thử kết nối WiFi trong 40 giây. Bạn sẽ nhận được thông báo "Wifi_OK" khi hoàn tất.
+          </Text>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 
   const renderSuccessState = () => (
     <View style={styles.successContainer}>
       <View style={styles.successIcon}>
-        <Text style={styles.successIconText}>✅</Text>
+        <Text style={styles.successIconText}>✓</Text>
       </View>
       
       <Text style={styles.successTitle}>Thành công!</Text>
@@ -419,7 +432,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({
 
       {/* Warning box */}
       <View style={styles.warningCard}>
-        <Text style={styles.warningIcon}>⚠️</Text>
+        <Text style={styles.warningIcon}>!</Text>
         <Text style={styles.warningText}>
           Chỉ khi bạn nhấn "Xác nhận hoàn thành", thiết bị mới được thêm chính thức vào hệ thống.
         </Text>
@@ -448,7 +461,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({
   const renderErrorState = () => (
     <View style={styles.errorContainer}>
       <View style={styles.errorIcon}>
-        <Text style={styles.errorIconText}>❌</Text>
+        <Text style={styles.errorIconText}>✕</Text>
       </View>
       
       <Text style={styles.errorTitle}>Có lỗi xảy ra</Text>
@@ -456,12 +469,12 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({
 
       <View style={styles.errorActions}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backButtonIcon}>←</Text>
+          <Text style={styles.backButtonIcon}>‹</Text>
           <Text style={styles.backButtonText}>Quay lại</Text>
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.retryButton} onPress={retryConnection}>
-          <Text style={styles.retryButtonIcon}>🔄</Text>
+          <Text style={styles.retryButtonIcon}>↻</Text>
           <Text style={styles.retryButtonText}>Thử lại</Text>
         </TouchableOpacity>
       </View>
@@ -472,7 +485,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({
     <View style={styles.container}>
       <View style={styles.appBar}>
         <TouchableOpacity style={styles.backIcon} onPress={onBack}>
-          <Text style={styles.backIconText}>←</Text>
+          <Text style={styles.backIconText}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.appBarTitle}>Cấu hình WiFi</Text>
         <View style={styles.appBarSpacer} />
@@ -503,8 +516,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backIconText: {
-    fontSize: 24,
+    fontSize: 28,
     color: 'white',
+    fontWeight: 'bold',
   },
   appBarTitle: {
     flex: 1,
@@ -515,6 +529,9 @@ const styles = StyleSheet.create({
   },
   appBarSpacer: {
     width: 40,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,
@@ -567,6 +584,7 @@ const styles = StyleSheet.create({
   },
   formContent: {
     padding: 24,
+    paddingBottom: 40, // Extra padding for keyboard
   },
   header: {
     alignItems: 'center',
@@ -609,8 +627,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#e8f4f8',
   },
   networkIcon: {
-    fontSize: 16,
+    fontSize: 12,
     marginRight: 12,
+    color: '#333',
+    fontWeight: 'bold',
   },
   networkName: {
     flex: 1,
@@ -624,6 +644,7 @@ const styles = StyleSheet.create({
   checkIcon: {
     fontSize: 16,
     color: '#17a2b8',
+    fontWeight: 'bold',
   },
   inputSection: {
     marginBottom: 20,
@@ -661,7 +682,9 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   eyeIcon: {
-    fontSize: 20,
+    fontSize: 18,
+    color: '#666',
+    fontWeight: 'bold',
   },
   submitButton: {
     backgroundColor: '#17a2b8',
@@ -673,8 +696,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   submitButtonIcon: {
-    fontSize: 20,
+    fontSize: 16,
     marginRight: 8,
+    color: 'white',
+    fontWeight: 'bold',
   },
   submitButtonText: {
     color: 'white',
@@ -690,8 +715,17 @@ const styles = StyleSheet.create({
     borderColor: '#b3d9ff',
   },
   infoIcon: {
-    fontSize: 16,
+    fontSize: 14,
     marginRight: 12,
+    color: '#0056b3',
+    fontWeight: 'bold',
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#0056b3',
+    textAlign: 'center',
+    lineHeight: 14,
   },
   infoText: {
     flex: 1,
@@ -715,7 +749,9 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   successIconText: {
-    fontSize: 60,
+    fontSize: 50,
+    color: '#28a745',
+    fontWeight: 'bold',
   },
   successTitle: {
     fontSize: 32,
@@ -741,8 +777,17 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   warningIcon: {
-    fontSize: 16,
+    fontSize: 14,
     marginRight: 12,
+    color: '#856404',
+    fontWeight: 'bold',
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#856404',
+    textAlign: 'center',
+    lineHeight: 14,
   },
   warningText: {
     flex: 1,
@@ -768,9 +813,10 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   completeButtonIcon: {
-    fontSize: 20,
+    fontSize: 18,
     color: 'white',
     marginRight: 8,
+    fontWeight: 'bold',
   },
   completeButtonText: {
     color: 'white',
@@ -793,7 +839,9 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   errorIconText: {
-    fontSize: 60,
+    fontSize: 50,
+    color: '#dc3545',
+    fontWeight: 'bold',
   },
   errorTitle: {
     fontSize: 28,
@@ -822,9 +870,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   backButtonIcon: {
-    fontSize: 16,
+    fontSize: 20,
     color: 'white',
     marginRight: 8,
+    fontWeight: 'bold',
   },
   backButtonText: {
     color: 'white',
@@ -840,9 +889,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   retryButtonIcon: {
-    fontSize: 16,
+    fontSize: 18,
     color: 'white',
     marginRight: 8,
+    fontWeight: 'bold',
   },
   retryButtonText: {
     color: 'white',
